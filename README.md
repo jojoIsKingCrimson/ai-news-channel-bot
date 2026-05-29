@@ -13,6 +13,8 @@
 - Product Hunt / GitHub Trending 抓取失败时会自动省略对应栏目，不影响 AI News 推送。
 - 支持私聊 `/preview` 立即生成预览，预览不会写入已发布记录。
 - 支持管理员私聊 `/run` 立即正式发布到频道，并写入已发布记录。
+- 支持 `/id` 查看用户/聊天 ID，支持管理员 `/test_channel` 测试频道发送权限。
+- 定时发布失败时会自动私聊 `TELEGRAM_ADMIN_USER_IDS` 中配置的管理员。
 - 使用本地 JSON state 记录最近 14 天已发布链接，减少重复推送。
 
 ## 准备
@@ -89,6 +91,8 @@ npm run dev
 
 - 向 bot 私聊发送 `/preview` 可以生成日报预览，不会发频道。
 - 配置 `TELEGRAM_ADMIN_USER_IDS` 后，发送 `/run` 可以立即正式发布到频道。
+- 发送 `/id` 可以查看当前 Telegram 用户 ID 和聊天 ID。
+- 管理员发送 `/test_channel` 可以向配置频道发送一条测试消息，验证频道 ID 和管理员权限是否正确。
 
 程序启动时只注册定时任务，不会立刻向频道推送。
 

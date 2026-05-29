@@ -62,6 +62,8 @@ export function createBot(
         "可用命令：",
         "/preview - 生成今日 AI 资讯日报预览",
         "/run - 立即发布日报到频道（仅管理员）",
+        "/test_channel - 测试频道发送权限（仅管理员）",
+        "/id - 查看当前 Telegram 用户 ID 和聊天 ID",
         "/help - 查看帮助"
       ].join("\n")
     )
@@ -122,6 +124,42 @@ export function createBot(
         await ctx.reply("立即发布失败，请查看服务日志里的错误信息。");
       }
     })();
+  });
+
+  bot.command("id", async (ctx) => {
+    await ctx.reply(
+      [
+        `你的 Telegram 用户 ID：${ctx.from?.id ?? "未知"}`,
+        `当前聊天 ID：${ctx.chat?.id ?? "未知"}`,
+        `当前聊天类型：${ctx.chat?.type ?? "未知"}`
+      ].join("\n")
+    );
+  });
+
+  bot.command("test_channel", async (ctx) => {
+    if (!isAdmin(config, ctx.from?.id)) {
+      await ctx.reply(unauthorizedRunMessage(ctx.from?.id));
+      return;
+    }
+
+    try {
+      await ctx.telegram.sendMessage(
+        config.telegramChannelId,
+        [
+          "频道连通性测试：机器人可以向这个频道发送消息。",
+          `时间：${new Date().toISOString()}`
+        ].join("\n")
+      );
+      await ctx.reply("频道连通性测试成功：bot 可以向配置频道发送消息。");
+    } catch (error) {
+      console.error("Channel connectivity test failed:", error);
+      await ctx.reply(
+        [
+          "频道连通性测试失败。",
+          "请确认 TELEGRAM_CHANNEL_ID 是 @channel_username 或 -100... 数字 ID，并确认 bot 已加入频道且是管理员。"
+        ].join("\n")
+      );
+    }
   });
 
   bot.hears(/^\/.+/, (ctx) =>

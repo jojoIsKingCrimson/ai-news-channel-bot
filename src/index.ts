@@ -1,5 +1,6 @@
 import "dotenv/config";
 import OpenAI from "openai";
+import { notifyScheduledDigestFailure } from "./admin-notify.js";
 import { createBot } from "./bot.js";
 import { loadConfig } from "./config.js";
 import { publishDailyDigest } from "./digest.js";
@@ -28,6 +29,11 @@ const scheduledTask = registerDailyDigest({
   },
   onError: (error) => {
     console.error("Daily digest job failed:", error);
+    void notifyScheduledDigestFailure(config, bot.telegram, error).catch(
+      (notifyError) => {
+        console.error("Daily digest failure notification failed:", notifyError);
+      }
+    );
   }
 });
 

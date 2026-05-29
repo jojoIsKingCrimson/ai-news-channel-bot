@@ -209,4 +209,114 @@ describe("createBot", () => {
       expect.any(Object)
     );
   });
+
+  test("handles /id by replying with user and chat identifiers", async () => {
+    const bot = createBot(config);
+    bot.botInfo = {
+      id: 123,
+      is_bot: true,
+      first_name: "AI News Bot",
+      username: "ai_news_bot"
+    };
+    const sendMessage = vi.fn(async () => ({ message_id: 2 }));
+    Object.assign(bot.context, {
+      telegram: { sendMessage }
+    });
+
+    await bot.handleUpdate({
+      update_id: 5,
+      message: {
+        message_id: 1,
+        date: 1779933600,
+        chat: { id: 42, type: "private", first_name: "Ada" },
+        from: { id: 42, is_bot: false, first_name: "Ada" },
+        text: "/id",
+        entities: [{ offset: 0, length: 3, type: "bot_command" }]
+      }
+    });
+
+    expect(sendMessage).toHaveBeenCalledWith(
+      42,
+      expect.stringContaining("你的 Telegram 用户 ID：42"),
+      expect.any(Object)
+    );
+    expect(sendMessage).toHaveBeenCalledWith(
+      42,
+      expect.stringContaining("当前聊天 ID：42"),
+      expect.any(Object)
+    );
+  });
+
+  test("handles /test_channel by sending a diagnostic message to the configured channel", async () => {
+    const bot = createBot(config);
+    bot.botInfo = {
+      id: 123,
+      is_bot: true,
+      first_name: "AI News Bot",
+      username: "ai_news_bot"
+    };
+    const sendMessage = vi.fn(async () => ({ message_id: 2 }));
+    Object.assign(bot.context, {
+      telegram: { sendMessage }
+    });
+
+    await bot.handleUpdate({
+      update_id: 6,
+      message: {
+        message_id: 1,
+        date: 1779933600,
+        chat: { id: 42, type: "private", first_name: "Ada" },
+        from: { id: 42, is_bot: false, first_name: "Ada" },
+        text: "/test_channel",
+        entities: [{ offset: 0, length: 13, type: "bot_command" }]
+      }
+    });
+
+    expect(sendMessage).toHaveBeenCalledWith(
+      "@ai_daily",
+      expect.stringContaining("频道连通性测试")
+    );
+    expect(sendMessage).toHaveBeenCalledWith(
+      42,
+      expect.stringContaining("频道连通性测试成功"),
+      expect.any(Object)
+    );
+  });
+
+  test("rejects /test_channel when the sender is not configured as an admin", async () => {
+    const bot = createBot({ ...config, telegramAdminUserIds: ["10086"] });
+    bot.botInfo = {
+      id: 123,
+      is_bot: true,
+      first_name: "AI News Bot",
+      username: "ai_news_bot"
+    };
+    const sendMessage = vi.fn(async () => ({ message_id: 2 }));
+    Object.assign(bot.context, {
+      telegram: { sendMessage }
+    });
+
+    await bot.handleUpdate({
+      update_id: 7,
+      message: {
+        message_id: 1,
+        date: 1779933600,
+        chat: { id: 42, type: "private", first_name: "Ada" },
+        from: { id: 42, is_bot: false, first_name: "Ada" },
+        text: "/test_channel",
+        entities: [{ offset: 0, length: 13, type: "bot_command" }]
+      }
+    });
+
+    expect(sendMessage).not.toHaveBeenCalledWith(
+      "@ai_daily",
+      expect.any(String),
+      expect.any(Object)
+    );
+    expect(sendMessage).toHaveBeenCalledWith(
+      42,
+      expect.stringContaining("没有权限"),
+      expect.any(Object)
+    );
+  });
 });
