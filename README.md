@@ -4,7 +4,7 @@
 
 ## 功能
 
-- 每天 `10:00 Asia/Shanghai` 自动向频道推送类似截图样式的 `AI Daily`。
+- 每天 `10:00 Asia/Shanghai` 自动向频道推送分栏目中文 `AI Daily` 简报。
 - 有 `TAVILY_API_KEY` 时使用 Tavily 搜索最近 24 小时的 AI 产品和行业动态；没有时自动降级为 RSS 源。
 - 有 `LLM_API_KEY` 时使用 OpenAI-compatible Chat Completions API 生成中文频道文案；没有时自动降级为本地模板日报。
 - 支持 OpenAI、Kimi/Moonshot，以及其他兼容 OpenAI Chat Completions 的服务。
