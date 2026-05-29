@@ -1,0 +1,74 @@
+name: Daily AI Digest
+
+on:
+  workflow_dispatch:
+  schedule:
+    # GitHub Actions cron uses UTC. 02:00 UTC is 10:00 Asia/Shanghai.
+    - cron: "0 2 * * *"
+
+concurrency:
+  group: daily-ai-digest
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  publish:
+    name: Publish daily digest
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+      TELEGRAM_ADMIN_USER_IDS: ${{ secrets.TELEGRAM_ADMIN_USER_IDS }}
+      TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      MOONSHOT_API_KEY: ${{ secrets.MOONSHOT_API_KEY }}
+      KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+      LLM_BASE_URL: ${{ vars.LLM_BASE_URL }}
+      LLM_MODEL: ${{ vars.LLM_MODEL }}
+      TIMEZONE: Asia/Shanghai
+      DIGEST_ITEM_LIMIT: ${{ vars.DIGEST_ITEM_LIMIT }}
+      STATE_FILE: .data/state.json
+      RSS_FEED_URLS: ${{ vars.RSS_FEED_URLS }}
+      INCLUDE_TRENDS: ${{ vars.INCLUDE_TRENDS }}
+      TREND_ITEM_LIMIT: ${{ vars.TREND_ITEM_LIMIT }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Restore publish state
+        uses: actions/cache/restore@v4
+        with:
+          path: .data
+          key: ai-news-state-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            ai-news-state-${{ github.ref_name }}-
+
+      - name: Ensure state directory exists
+        run: mkdir -p .data
+
+      - name: Publish digest once
+        run: npm run publish:once
+
+      - name: Save publish state
+        if: success()
+        uses: actions/cache/save@v4
+        with:
+          path: .data
+          key: ai-news-state-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}

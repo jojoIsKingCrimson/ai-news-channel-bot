@@ -23,7 +23,7 @@ export type DailyDigestResult =
   | { status: "published"; digest: Digest; articles: ArticleCandidate[] }
   | { status: "skipped"; reason: string };
 
-interface DigestDependencies {
+export interface DigestDependencies {
   collect?: () => Promise<ArticleCandidate[]>;
   summarize?: (articles: ArticleCandidate[]) => Promise<Digest>;
   collectTrends?: () => Promise<PulseTrends>;

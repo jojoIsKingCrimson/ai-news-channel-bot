@@ -98,6 +98,69 @@ npm run dev
 
 程序启动时只注册定时任务，不会立刻向频道推送。
 
+## GitHub Actions 定时版
+
+这个部署方式不需要 VPS 常驻进程。GitHub Actions 会每天运行一次脚本，生成日报、发送到频道，然后退出。
+
+适合场景：
+
+- 只需要每天自动发频道日报。
+- 不需要机器人 24 小时在线响应 `/preview`、`/run`。
+- 可以接受 GitHub Actions 定时任务偶尔有几分钟延迟。
+
+已内置 workflow：
+
+- 文件：`.github/workflows/daily-digest.yml`
+- 定时：每天 `02:00 UTC`，对应中国时间 `10:00 Asia/Shanghai`
+- 手动触发：GitHub 仓库 `Actions` → `Daily AI Digest` → `Run workflow`
+- 状态保存：用 GitHub Actions cache 保存 `.data/state.json`，减少重复发布最近 14 天发过的链接
+
+需要在 GitHub 仓库配置这些 Secrets：
+
+```text
+TELEGRAM_BOT_TOKEN
+TELEGRAM_CHANNEL_ID
+```
+
+推荐一起配置：
+
+```text
+TELEGRAM_ADMIN_USER_IDS
+TAVILY_API_KEY
+LLM_API_KEY
+MOONSHOT_API_KEY
+KIMI_API_KEY
+```
+
+可选配置放在仓库 Variables：
+
+```text
+LLM_BASE_URL
+LLM_MODEL
+DIGEST_ITEM_LIMIT
+RSS_FEED_URLS
+INCLUDE_TRENDS
+TREND_ITEM_LIMIT
+```
+
+Kimi/Moonshot 示例：
+
+```text
+LLM_API_KEY=你的 Kimi/Moonshot API Key
+LLM_BASE_URL=https://api.moonshot.ai/v1
+LLM_MODEL=kimi-k2.6
+```
+
+本地模拟 GitHub Actions 单次发布：
+
+```bash
+npm install
+npm run build
+npm run publish:once
+```
+
+注意：workflow 文件必须提交并推送到默认分支 `main` 后，GitHub 才会真正开始定时运行。
+
 ## VPS 常驻运行
 
 第一版设计为 VPS/服务器常驻进程：Node 进程一直运行，Telegraf 长轮询接收 `/preview`，node-cron 在进程内每天 `10:00 Asia/Shanghai` 触发推送。
@@ -133,6 +196,7 @@ pm2 restart telegram-ai-news-bot
 npm test
 npm run build
 npm start
+npm run publish:once
 ```
 
 ## 项目结构
@@ -146,6 +210,8 @@ npm start
 - `src/trends.ts`: Product Hunt feed 和 GitHub Trending 趋势栏目采集。
 - `src/publish.ts`: Telegram HTML 格式化和频道发送。
 - `src/scheduler.ts`: 每日 cron 注册。
+- `src/run-once.ts`: GitHub Actions 单次发布 runner。
+- `src/github-action.ts`: GitHub Actions CLI 入口。
 - `src/digest.ts`: 预览和定时发布流水线。
 - `src/bot.ts`: Telegram 命令处理。
 - `src/index.ts`: VPS 常驻进程入口。

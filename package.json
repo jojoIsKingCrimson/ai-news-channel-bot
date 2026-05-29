@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "tsx src/index.ts",
+    "dev:once": "tsx src/github-action.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
+    "publish:once": "node dist/github-action.js",
     "test": "vitest run"
   },
   "dependencies": {
