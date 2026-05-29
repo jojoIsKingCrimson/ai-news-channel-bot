@@ -37,7 +37,7 @@ const scheduledTask = registerDailyDigest({
   }
 });
 
-await registerBotCommands(bot.telegram);
+await registerBotCommands(bot.telegram, config);
 await bot.launch();
 console.info(
   `Telegram AI news bot is running. Digest schedule: ${config.digestCron} ${config.timezone}.`
