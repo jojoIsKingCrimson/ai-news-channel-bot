@@ -1,7 +1,7 @@
 import "dotenv/config";
 import OpenAI from "openai";
 import { notifyScheduledDigestFailure } from "./admin-notify.js";
-import { createBot } from "./bot.js";
+import { createBot, registerBotCommands } from "./bot.js";
 import { loadConfig } from "./config.js";
 import { publishDailyDigest } from "./digest.js";
 import { registerDailyDigest } from "./scheduler.js";
@@ -37,6 +37,7 @@ const scheduledTask = registerDailyDigest({
   }
 });
 
+await registerBotCommands(bot.telegram);
 await bot.launch();
 console.info(
   `Telegram AI news bot is running. Digest schedule: ${config.digestCron} ${config.timezone}.`

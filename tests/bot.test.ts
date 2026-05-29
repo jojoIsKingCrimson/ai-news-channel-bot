@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { createBot } from "../src/bot.js";
+import { botCommands, createBot, registerBotCommands } from "../src/bot.js";
 import type { AppConfig, Digest } from "../src/types.js";
 
 const config: AppConfig = {
@@ -33,6 +33,23 @@ const digest: Digest = {
 };
 
 describe("createBot", () => {
+  test("registers Telegram slash-command suggestions", async () => {
+    const telegram = {
+      setMyCommands: vi.fn(async () => true)
+    };
+
+    await registerBotCommands(telegram);
+
+    expect(telegram.setMyCommands).toHaveBeenCalledWith(botCommands);
+    expect(botCommands).toEqual([
+      { command: "preview", description: "生成今日 AI 资讯日报预览" },
+      { command: "run", description: "立即发布日报到频道（管理员）" },
+      { command: "test_channel", description: "测试频道发送权限（管理员）" },
+      { command: "id", description: "查看当前用户 ID 和聊天 ID" },
+      { command: "help", description: "查看帮助" }
+    ]);
+  });
+
   test("handles /preview by replying with a digest preview", async () => {
     const bot = createBot(config, {
       previewDailyDigest: vi.fn(async () => ({ status: "ready", digest }))

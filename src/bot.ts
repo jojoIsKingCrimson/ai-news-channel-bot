@@ -13,6 +13,20 @@ import {
 import type { OpenAICompatibleChatClient } from "./summarize.js";
 import type { AppConfig } from "./types.js";
 
+export const botCommands = [
+  { command: "preview", description: "生成今日 AI 资讯日报预览" },
+  { command: "run", description: "立即发布日报到频道（管理员）" },
+  { command: "test_channel", description: "测试频道发送权限（管理员）" },
+  { command: "id", description: "查看当前用户 ID 和聊天 ID" },
+  { command: "help", description: "查看帮助" }
+];
+
+export interface CommandRegistrar {
+  setMyCommands(
+    commands: Array<{ command: string; description: string }>
+  ): Promise<unknown>;
+}
+
 interface BotDependencies {
   previewDailyDigest?: (config: AppConfig) => Promise<DailyDigestResult>;
   publishDailyDigest?: (
@@ -22,6 +36,12 @@ interface BotDependencies {
   llmClient?: OpenAICompatibleChatClient;
   fetchImpl?: typeof fetch;
   now?: Date;
+}
+
+export async function registerBotCommands(
+  telegram: CommandRegistrar
+): Promise<void> {
+  await telegram.setMyCommands(botCommands);
 }
 
 export function createBot(
