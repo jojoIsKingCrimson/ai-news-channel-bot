@@ -3,8 +3,9 @@ name: Daily AI Digest
 on:
   workflow_dispatch:
   schedule:
-    # GitHub Actions cron uses UTC. 02:00 UTC is 10:00 Asia/Shanghai.
-    - cron: "0 2 * * *"
+    # GitHub Actions cron uses UTC. 02:07 UTC is 10:07 Asia/Shanghai.
+    # Avoid minute 0 because scheduled runs can be delayed or dropped at busy hour boundaries.
+    - cron: "7 2 * * *"
 
 concurrency:
   group: daily-ai-digest
@@ -13,6 +14,9 @@ concurrency:
 permissions:
   contents: read
   actions: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   publish:

@@ -4,7 +4,7 @@
 
 ## 功能
 
-- 每天 `10:00 Asia/Shanghai` 自动向频道推送分栏目中文 `AI Daily` 简报。
+- VPS 常驻版每天 `10:00 Asia/Shanghai` 自动推送；GitHub Actions 定时版默认 `10:07 Asia/Shanghai` 推送，以避开 GitHub 整点拥堵。
 - 有 `TAVILY_API_KEY` 时使用 Tavily 搜索最近 24 小时的 AI 产品和行业动态；没有时自动降级为 RSS 源。
 - 有 `LLM_API_KEY` 时使用 OpenAI-compatible Chat Completions API 生成中文频道文案；没有时自动降级为本地模板日报。
 - 支持 OpenAI、Kimi/Moonshot，以及其他兼容 OpenAI Chat Completions 的服务。
@@ -111,7 +111,8 @@ npm run dev
 已内置 workflow：
 
 - 文件：`.github/workflows/daily-digest.yml`
-- 定时：每天 `02:00 UTC`，对应中国时间 `10:00 Asia/Shanghai`
+- 定时：每天 `02:07 UTC`，对应中国时间 `10:07 Asia/Shanghai`
+- 说明：GitHub Actions 的 `schedule` 在整点附近负载较高时可能延迟或被丢弃，所以 workflow 避开 `00` 分钟运行
 - 手动触发：GitHub 仓库 `Actions` → `Daily AI Digest` → `Run workflow`
 - 状态保存：用 GitHub Actions cache 保存 `.data/state.json`，减少重复发布最近 14 天发过的链接
 
