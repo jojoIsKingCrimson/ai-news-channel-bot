@@ -75,6 +75,7 @@ export function markPublished(
   now: Date = new Date()
 ): PublishState {
   return {
+    lastPublishedDate: publishDateKey(now),
     published: [
       ...state.published,
       ...articles.map((article) => ({
@@ -93,8 +94,16 @@ export function pruneState(
 ): PublishState {
   const cutoff = now.getTime() - maxAgeDays * 24 * 60 * 60 * 1000;
   return {
+    lastPublishedDate: state.lastPublishedDate,
     published: state.published.filter((item) => Date.parse(item.publishedAt) >= cutoff)
   };
+}
+
+export function hasPublishedDigestToday(
+  state: PublishState,
+  now: Date = new Date()
+): boolean {
+  return state.lastPublishedDate === publishDateKey(now);
 }
 
 export async function loadState(filePath: string): Promise<PublishState> {
@@ -102,6 +111,10 @@ export async function loadState(filePath: string): Promise<PublishState> {
     const raw = await readFile(filePath, "utf8");
     const parsed = JSON.parse(raw) as Partial<PublishState>;
     return {
+      lastPublishedDate:
+        typeof parsed.lastPublishedDate === "string"
+          ? parsed.lastPublishedDate
+          : undefined,
       published: Array.isArray(parsed.published) ? parsed.published : []
     };
   } catch (error) {
@@ -110,6 +123,10 @@ export async function loadState(filePath: string): Promise<PublishState> {
     }
     throw error;
   }
+}
+
+function publishDateKey(now: Date): string {
+  return now.toISOString().slice(0, 10);
 }
 
 export async function saveState(filePath: string, state: PublishState): Promise<void> {

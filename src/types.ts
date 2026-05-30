@@ -64,5 +64,6 @@ export interface PublishedRecord {
 }
 
 export interface PublishState {
+  lastPublishedDate?: string;
   published: PublishedRecord[];
 }

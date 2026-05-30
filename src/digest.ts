@@ -2,6 +2,7 @@ import { collectAiNews } from "./collect.js";
 import {
   canonicalizeUrl,
   filterFreshArticles,
+  hasPublishedDigestToday,
   loadState,
   markPublished,
   pruneState,
@@ -53,6 +54,12 @@ export async function publishDailyDigest(
     throw new Error("Telegram sender is required to publish the digest");
   }
 
+  const now = deps.now ?? new Date();
+  const state = pruneState(await loadState(config.stateFile), now);
+  if (hasPublishedDigestToday(state, now)) {
+    return { status: "skipped", reason: "今天已经发布过 AI 日报。" };
+  }
+
   const result = await generateDailyDigest(config, deps);
   if (result.status !== "ready") {
     return result;
@@ -60,10 +67,9 @@ export async function publishDailyDigest(
 
   await sendDigest(deps.telegram, config.telegramChannelId, result.digest);
 
-  const now = deps.now ?? new Date();
-  const state = pruneState(await loadState(config.stateFile), now);
+  const latestState = pruneState(await loadState(config.stateFile), now);
   const publishedArticles = articlesForDigest(result.digest, result.articles);
-  const updated = pruneState(markPublished(state, publishedArticles, now), now);
+  const updated = pruneState(markPublished(latestState, publishedArticles, now), now);
   await saveState(config.stateFile, updated);
 
   return {

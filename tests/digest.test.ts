@@ -1,5 +1,5 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { previewDailyDigest, publishDailyDigest } from "../src/digest.js";
@@ -114,13 +114,88 @@ describe("daily digest pipeline", () => {
     );
 
     const state = JSON.parse(await readFile(config.stateFile, "utf8"));
-    expect(state.published).toEqual([
-      {
-        url: "https://openai.com/news/product",
-        title: "OpenAI ships an AI product update",
-        publishedAt: "2026-05-28T02:00:00.000Z"
-      }
-    ]);
+    expect(state).toMatchObject({
+      lastPublishedDate: "2026-05-28",
+      published: [
+        {
+          url: "https://openai.com/news/product",
+          title: "OpenAI ships an AI product update",
+          publishedAt: "2026-05-28T02:00:00.000Z"
+        }
+      ]
+    });
+  });
+
+  test("scheduled publishing skips when a digest already ran today", async () => {
+    const config = await makeConfig();
+    await mkdir(dirname(config.stateFile), { recursive: true });
+    await writeFile(
+      config.stateFile,
+      `${JSON.stringify({
+        lastPublishedDate: "2026-05-30",
+        published: [
+          {
+            url: "https://previous.example.com",
+            title: "Previous story",
+            publishedAt: "2026-05-30T02:00:00.000Z"
+          }
+        ]
+      })}\n`,
+      "utf8"
+    );
+    const telegram = {
+      sendMessage: vi.fn(async () => ({ message_id: 1 }))
+    };
+    const collect = vi.fn(async () => [article]);
+
+    const result = await publishDailyDigest(config, {
+      collect,
+      summarize: vi.fn(async () => digest),
+      collectTrends: vi.fn(async () => ({
+        productHunt: [],
+        githubTrending: []
+      })),
+      telegram,
+      now: new Date("2026-05-30T05:00:00.000Z")
+    });
+
+    expect(result).toEqual({
+      status: "skipped",
+      reason: "今天已经发布过 AI 日报。"
+    });
+    expect(collect).not.toHaveBeenCalled();
+    expect(telegram.sendMessage).not.toHaveBeenCalled();
+  });
+
+  test("legacy publish state without a daily marker remains readable", async () => {
+    const config = await makeConfig();
+    const telegram = {
+      sendMessage: vi.fn(async () => ({ message_id: 1 }))
+    };
+
+    const result = await publishDailyDigest(config, {
+      collect: vi.fn(async () => [article]),
+      summarize: vi.fn(async () => digest),
+      collectTrends: vi.fn(async () => ({
+        productHunt: [],
+        githubTrending: []
+      })),
+      telegram,
+      now: new Date("2026-05-30T05:00:00.000Z")
+    });
+
+    expect(result.status).toBe("published");
+    const state = JSON.parse(await readFile(config.stateFile, "utf8"));
+    expect(state).toMatchObject({
+      lastPublishedDate: "2026-05-30",
+      published: [
+        {
+          url: "https://openai.com/news/product",
+          title: "OpenAI ships an AI product update",
+          publishedAt: "2026-05-30T05:00:00.000Z"
+        }
+      ]
+    });
   });
 
   test("falls back to RSS collection and template summary when API keys are absent", async () => {
