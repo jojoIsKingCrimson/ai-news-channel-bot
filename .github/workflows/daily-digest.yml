@@ -6,8 +6,6 @@ on:
     # GitHub Actions cron uses UTC. 02:07 UTC is 10:07 Asia/Shanghai.
     # Avoid minute 0 because scheduled runs can be delayed or dropped at busy hour boundaries.
     - cron: "7 2 * * *"
-    # Temporary verification run: 05:07 UTC is 13:07 Asia/Shanghai.
-    - cron: "7 5 * * *"
 
 concurrency:
   group: daily-ai-digest
