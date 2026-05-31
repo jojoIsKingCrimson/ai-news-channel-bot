@@ -2,10 +2,6 @@ name: Daily AI Digest
 
 on:
   workflow_dispatch:
-  schedule:
-    # GitHub Actions cron uses UTC. 02:07 UTC is 10:07 Asia/Shanghai.
-    # Avoid minute 0 because scheduled runs can be delayed or dropped at busy hour boundaries.
-    - cron: "7 2 * * *"
 
 concurrency:
   group: daily-ai-digest
